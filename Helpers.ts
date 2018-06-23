@@ -1,5 +1,19 @@
 namespace array {
     /**
+     * Durstenfeld shuffle
+     * @param array 
+     */
+    export function shuffle<T>(array: T[]): T[] {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = ~~(Math.random() * (i + 1));
+            const t = array[i];
+            array[i] = array[j];
+            array[j] = t;
+        }
+        return array;
+    }
+
+    /**
      * Pick one element in array randomly.
      * @param options
      */
