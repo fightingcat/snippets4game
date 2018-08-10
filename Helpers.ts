@@ -1,5 +1,13 @@
 namespace array {
     /**
+     * Pick one element in array randomly.
+     * @param options
+     */
+    export function randPick<T>(options: T[]): T {
+        return options[Math.floor(Math.random() * options.length)];
+    }
+
+    /**
      * Durstenfeld shuffle
      * @param array 
      */
@@ -14,24 +22,39 @@ namespace array {
     }
 
     /**
-     * Pick one element in array randomly.
-     * @param options
-     */
-    export function randPick<T>(options: T[]): T {
-        return options[Math.floor(Math.random() * options.length)];
-    }
-
-    /**
      * Dedupe array base on return value of an accessor function.
      * @param array
      * @param accessor
      */
     export function dedupe<T>(array: T[], accessor: (element: T) => any): T[] {
         let set = new Set();
+
         return array.filter(element => {
             let value = accessor(element);
+
             return set.has(value) ? false : set.add(value), true;
         });
+    }
+
+    export function map<T, K>(array: T[], accessor: (element: T) => K): Map<K, T> {
+        let map = new Map<K, T>();
+
+        for (let element of array) {
+            map.set(accessor(element), element);
+        }
+        return map;
+    }
+
+    export function group<T, K>(array: T[], accessor: (element: T) => K): Map<K, T[]> {
+        let map = new Map<K, T[]>();
+
+        for (let element of array) {
+            let key = accessor(element);
+
+            if (map.has(key)) map.get(key).push(element);
+            else map.set(key, [element]);
+        }
+        return map;
     }
 }
 
@@ -75,6 +98,7 @@ namespace string {
      */
     export function rand(length: number): string {
         let result = '';
+
         for (let i = 0; i < length; i++) {
             result += array.randPick(randElements);
         }
