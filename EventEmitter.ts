@@ -1,65 +1,54 @@
-namespace utils {
+class EventEmitter {
+    private events = new Map<string, { fn: Function, context: any, once: boolean }[]>();
 
-    interface Record<T> {
-        fn: EventListener<T>;
-        context?: any;
-        once?: boolean;
+    public on(event: string, fn: Function, context?: any): this {
+        let listeners = this.events.get(event);
+        if (listeners) listeners.push({ once: false, fn, context });
+        else this.events.set(event, [{ once: false, fn, context }]);
+        return this;
     }
 
-    export type EventListener<T> = (event: T, ...args: any[]) => any;
+    public once(event: string, fn: Function, context?: any): this {
+        let listeners = this.events.get(event);
+        if (listeners) listeners.push({ once: true, fn, context });
+        else this.events.set(event, [{ once: true, fn, context }]);
+        return this;
+    }
 
-    export class EventEmitter<T = string | number> {
-        private _events = new Map<T, Record<T>[]>();
+    public off(event: string, fn?: Function, context?: any, once?: boolean): this {
+        let listeners = this.events.get(event);
 
-        public once(event: T): Promise<any>;
+        if (fn && listeners) {
+            for (let i = listeners.length - 1; i >= 0; i--) {
+                let l = listeners[i];
 
-        public once(event: T, fn: EventListener<T>, context?: any): void;
-
-        public once(event: T, fn?: EventListener<T>, context?: any): Promise<any> | void {
-            if (fn) return this.on(event, fn, context, true);
-            return new Promise((resolve, reject) => this.on(event, (event, data) => resolve(data)));
-        }
-
-        public on(event: T, fn: EventListener<T>, context?: any, once?: boolean): void {
-            if (this._events.has(event)) {
-                this._events.get(event).push({ fn, context, once });
-            }
-            else {
-                this._events.set(event, [{ fn, context, once }]);
-            }
-        }
-
-        public off(event: T, fn?: EventListener<T>, context?: any, once?: boolean): void {
-            if (this._events.has(event)) {
-                if (fn) {
-                    const listeners = this._events.get(event).filter(it => {
-                        return fn !== it.fn || context != it.context || (!!once && !it.once);
-                    });
-                    if (listeners.length > 0) {
-                        this._events.set(event, listeners);
-                        return;
-                    }
+                if ((fn === l.fn) && (!once || l.once) && (!context || l.context === context)) {
+                    listeners.splice(i, 1);
                 }
-                this._events.delete(event);
             }
         }
-
-        public emit(event: T, ...args: any[]): boolean {
-            const listeners = this._events.get(event);
-
-            if (!listeners) return false;
-
-            const remain = listeners.filter((listener, index) => {
-                if (listener.fn) listener.fn.call(listener.context, event, ...args);
-                return !listener.once;
-            });
-            if (remain.length == 0) {
-                this._events.delete(event);
-            }
-            else if (remain.length != listeners.length) {
-                this._events.set(event, remain);
-            }
-            return true;
+        else {
+            this.events.delete(event);
         }
+        return this;
+    }
+
+    public offAll(): this {
+        this.events.clear();
+        return this;
+    }
+
+    public emit(event: string, ...args: any[]): this {
+        let listeners = this.events.get(event);
+
+        if (listeners) {
+            for (let i = 0; i < listeners.length; i++) {
+                let listener = listeners[i];
+
+                if (listener.once) listeners.splice(i--, 1);
+                listener.fn.apply(listener.context, args);
+            }
+        }
+        return this;
     }
 }

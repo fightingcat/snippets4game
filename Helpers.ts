@@ -77,13 +77,8 @@ namespace number {
         return Math.floor(rand(start, Math.floor(end) + 1));
     }
 
-    /**
-     * callback style loop.
-     * @param times
-     * @param fn
-     */
-    export function loop<T>(times: number, fn: (i: number) => any): void {
-        for (let i = 0; i < times; i++) if (fn(i)) return;
+    export function clamp(value: number, min: number, max: number) {
+        return Math.min(Math.max(min, value), max);
     }
 }
 
